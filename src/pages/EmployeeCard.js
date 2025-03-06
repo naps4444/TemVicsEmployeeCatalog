@@ -12,13 +12,14 @@ const EmployeeCard = ({ employee }) => {
 
   // ✅ Ensure employee data is up-to-date from Zustand store
   const updatedEmployee = employees.find((emp) => emp._id === employee._id) || employee;
-
   const [isEditing, setIsEditing] = useState(false);
 
   // ✅ Ensure logged-in user ID exists
   if (!loggedInUser?.id) {
     console.error("🚨 Error: User ID is missing in session data.");
-    alert("User ID is missing. Please log in again.");
+    if (typeof window !== "undefined") {
+      alert("User ID is missing. Please log in again.");
+    }
     return null;
   }
 
@@ -27,13 +28,14 @@ const EmployeeCard = ({ employee }) => {
     return <p className="text-red-500 text-center font-semibold">Error: Employee data is missing</p>;
   }
 
-  const handleUpdate = async (updatedInfo) => {
-    console.log("🛠️ Debugging: Employee data before update:", updatedEmployee);
-    console.log("🔍 Checking Employee ID:", updatedEmployee._id); // Ensure this is defined
+  // ✅ Check if user is authorized to edit
+  const canEdit = loggedInUser.id === updatedEmployee._id || loggedInUser.role === "admin";
 
-    if (!updatedEmployee || !updatedEmployee._id) {
-      console.error("🚨 Error: Employee ID is missing!");
-      alert("Error: Invalid or missing Employee ID.");
+  const handleUpdate = async (updatedInfo) => {
+    if (!canEdit) {
+      if (typeof window !== "undefined") {
+        alert("❌ You are not authorized to edit this profile.");
+      }
       return;
     }
 
@@ -45,35 +47,53 @@ const EmployeeCard = ({ employee }) => {
       });
 
       const responseData = await response.json();
-      console.log("🛠️ Debugging: Server response:", responseData);
-
       if (response.ok) {
         updateEmployee(responseData);
-        alert("Profile updated successfully.");
+        if (typeof window !== "undefined") {
+          alert("Profile updated successfully.");
+        }
         setIsEditing(false);
       } else {
-        console.error("🚨 Update Failed:", responseData.error);
-        alert(`Failed to update profile: ${responseData.error}`);
+        if (typeof window !== "undefined") {
+          alert(`Failed to update profile: ${responseData.error}`);
+        }
       }
     } catch (error) {
       console.error("🚨 Error updating user:", error);
-      alert("An error occurred. Please try again.");
+      if (typeof window !== "undefined") {
+        alert("An error occurred. Please try again.");
+      }
     }
   };
 
   const handleDelete = async () => {
-    try {
-      const response = await fetch(`/api/employees/${updatedEmployee._id}`, { method: "DELETE" });
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this employee?")) {
+      return;
+    }
 
+    try {
+      const response = await fetch(`/api/employees/${updatedEmployee._id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
       if (response.ok) {
-        deleteEmployee(updatedEmployee._id); // ✅ Remove from Zustand store
-        alert("Employee deleted successfully.");
+        deleteEmployee(updatedEmployee._id);
+        if (typeof window !== "undefined") {
+          alert("Employee deleted successfully.");
+          window.location.reload();
+        }
       } else {
-        alert("Failed to delete employee.");
+        if (typeof window !== "undefined") {
+          alert(data.error || "Failed to delete employee.");
+        }
       }
     } catch (error) {
       console.error("🚨 Error deleting user:", error);
-      alert("An error occurred. Please try again.");
+      if (typeof window !== "undefined") {
+        alert("An error occurred. Please try again.");
+      }
     }
   };
 
@@ -120,15 +140,18 @@ const EmployeeCard = ({ employee }) => {
             {updatedEmployee.role || "No Role"}
           </span>
 
+          {/* ✅ Conditional buttons based on permissions */}
           <div className="mt-5 flex gap-4">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition"
-            >
-              Edit Profile
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition"
+              >
+                Edit Profile
+              </button>
+            )}
 
-            {loggedInUser?.role === "admin" && updatedEmployee.role !== "admin" && (
+            {loggedInUser?.role === "admin" && (
               <button
                 onClick={handleDelete}
                 className="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition"

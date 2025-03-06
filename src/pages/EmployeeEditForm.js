@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import useEmployeeStore from "@/store/employeeStore"; // Import Zustand store
 
 const EmployeeEditForm = ({ user, onUpdate, onCancel }) => {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const { setUser } = useEmployeeStore(); // Zustand function to update the user state
-  const [previewImage, setPreviewImage] = useState(user.image || "");
+  const [previewImage, setPreviewImage] = useState(user?.image || "");
 
   const {
     register,
@@ -18,13 +19,13 @@ const EmployeeEditForm = ({ user, onUpdate, onCancel }) => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      age: user.age || "",
-      education: user.education || "",
-      state: user.state || "",
-      religion: user.religion || "",
-      department: user.department || "",
-      role: user.role || "",
-      image: user.image || "",
+      age: user?.age || "",
+      education: user?.education || "",
+      state: user?.state || "",
+      religion: user?.religion || "",
+      department: user?.department || "",
+      role: user?.role || "",
+      image: user?.image || "",
     },
   });
 
@@ -34,45 +35,60 @@ const EmployeeEditForm = ({ user, onUpdate, onCancel }) => {
     }
   }, [user, setValue]);
 
+  // Ensure session is fully loaded before accessing user data
+  if (status === "loading") {
+    return <p>Loading session...</p>;
+  }
+
+  if (!session?.user) {
+    return <p className="text-red-500">Session data not available. Please log in.</p>;
+  }
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+  
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
+      if (typeof window !== "undefined") {
+        alert("Please upload a valid image file.");
+      }
       return;
     }
-
+  
     const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSizeInBytes) {
-      alert("File size exceeds the 2MB limit.");
+      if (typeof window !== "undefined") {
+        alert("File size exceeds the 2MB limit.");
+      }
       return;
     }
-
+  
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewImage(reader.result);
       setValue("image", reader.result, { shouldValidate: true });
-
+  
       // ✅ Immediately update Zustand store with the new image
       setUser((prevUser) => ({ ...prevUser, image: reader.result }));
     };
     reader.readAsDataURL(file);
   };
+  
 
   const onSubmit = async (data) => {
     const updatedUser = { ...user, ...data };
-    
+
     await onUpdate(updatedUser);
 
     // ✅ Update Zustand store to reflect changes immediately in Navbar
     setUser(updatedUser);
 
     // ✅ Re-authenticate to refresh session (but do not reload the page)
-    await signIn("credentials", { redirect: false,
-    email: updatedUser.email, 
-    password: user.password,
-     });
+    await signIn("credentials", { 
+      redirect: false,
+      email: updatedUser.email, 
+      password: user.password,
+    });
   };
 
   return (
@@ -84,11 +100,12 @@ const EmployeeEditForm = ({ user, onUpdate, onCancel }) => {
         {errors.image && <p className="text-red-500">{errors.image.message}</p>}
       </div>
 
-      {[ { name: "age", label: "Age", type: "number", min: 18, max: 65 },
-         { name: "education", label: "Education", type: "text" },
-         { name: "state", label: "State", type: "text" },
-         { name: "religion", label: "Religion", type: "text" },
-         { name: "department", label: "Department", type: "text" },
+      {[
+        { name: "age", label: "Age", type: "number", min: 18, max: 65 },
+        { name: "education", label: "Education", type: "text" },
+        { name: "state", label: "State", type: "text" },
+        { name: "religion", label: "Religion", type: "text" },
+        { name: "department", label: "Department", type: "text" },
       ].map(({ name, label, type, min, max }) => (
         <div key={name}>
           <label className="block font-medium text-gray-700">{label}</label>

@@ -15,33 +15,44 @@ const useEmployeeStore = create((set) => ({
   // Fetch Employees from API
   fetchEmployees: async () => {
     set({ loading: true, error: null });
+  
     try {
-      const response = await fetch("/api/employees");
-      if (!response.ok) throw new Error("Failed to fetch employees");
+      console.log("🚀 Fetching employees from API...");
+  
+      const response = await fetch("/api/employees", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",  // 🌍 CORS: Allow all origins
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      });
+  
+      console.log("🛠️ Response status:", response.status);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("🚨 API Error Response:", errorData);
+        throw new Error(errorData.error || `HTTP Error: ${response.status}`);
+      }
+  
       const data = await response.json();
-
-      console.log("🛠️ Debugging: Employees fetched from API:", data); // 🔍 Check the data structure
-
+      console.log("✅ Employees fetched successfully:", data);
+  
       if (Array.isArray(data.employees)) {
-        console.log(
-          "🔍 Checking _id in fetched employees:",
-          data.employees.map((emp) => emp._id)
-        ); // Log all _id values
         set({ employees: data.employees, loading: false });
       } else if (Array.isArray(data)) {
-        console.log(
-          "🔍 Checking _id in fetched employees:",
-          data.map((emp) => emp._id)
-        ); // Log all _id values if API returns an array directly
         set({ employees: data, loading: false });
       } else {
         throw new Error("Unexpected data format");
       }
     } catch (error) {
-      console.error("🚨 Error fetching employees:", error);
+      console.error("🚨 Fetch Error:", error.message);
       set({ error: error.message, loading: false });
     }
   },
+  
 
   // Add an Employee
   addEmployee: (newEmployee) =>

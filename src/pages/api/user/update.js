@@ -1,7 +1,7 @@
 import { unstable_getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import dbConnect from "../../../lib/mongodb";
-import User from "../../../models/User";
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/User";
 import cloudinary from "cloudinary";
 
 // Configure Cloudinary
