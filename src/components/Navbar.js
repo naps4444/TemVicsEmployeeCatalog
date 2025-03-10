@@ -60,8 +60,10 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/EmployeePage" className="hover:underline">Employees Page</Link>
-          <Link href="/ProductUpload" className="hover:underline">Upload Products</Link>
+  <Link href="/EmployeePage" className="hover:underline">Employees Page</Link>
+  <Link href="/ProductUpload" className="hover:underline">Upload Products</Link>
+  <Link href="/Products" className="hover:underline">Products Items</Link> {/* ✅ Added here */}
+
           {status === "loading" ? (
             <p>Loading...</p>
           ) : employee ? (
@@ -88,14 +90,20 @@ export default function Navbar() {
       >
         <Link href="/EmployeePage" className="hover:underline" onClick={() => setMenuOpen(false)}>Employees Page</Link>
         <Link href="/ProductUpload" className="hover:underline" onClick={() => setMenuOpen(false)}>Upload Products</Link>
+        <Link href="/Products" className="hover:underline" onClick={() => setMenuOpen(false)}>Products Items</Link>
+        
         {status === "loading" ? (
           <p>Loading...</p>
         ) : employee ? (
           <div className="flex flex-col items-center gap-3">
             <Image src={employee?.image || "/default-avatar.png"} alt="Profile" width={40} height={40} className="rounded-full object-cover" />
-            <button onClick={() => signOut()} className="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
-              Logout
-            </button>
+            <button
+  onClick={() => signOut({ callbackUrl: "/login" })} // ✅ Redirects to login page after logout
+  className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+>
+  Logout
+</button>
+
           </div>
         ) : (
           <Link href="/login" className="bg-black px-4 py-2 rounded hover:bg-blue-600 text-center" onClick={() => setMenuOpen(false)}>
