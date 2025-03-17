@@ -13,7 +13,7 @@ const EmployeePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
+    <div className="min-h-screen bg-[#504B38] py-10">
       <EmployeeList employees={employees} />
     </div>
   );

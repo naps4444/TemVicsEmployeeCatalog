@@ -1,11 +1,10 @@
-import { RingLoader } from "react-spinners";
+import { PropagateLoader } from "react-spinners";
 
 function Loader() {
   return (
-    <RingLoader 
-      color="#4fa94d" 
-      size={80} 
-    />
+    <div className="flex justify-center items-center py-20">
+      <PropagateLoader color="#306cce" size={15} />
+    </div>
   );
 }
 

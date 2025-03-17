@@ -12,13 +12,23 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Increase the request body size limit
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb", // ✅ Allow larger request bodies (fixes 413 error)
+    },
+  },
+};
+
 export default async function handler(req, res) {
   await dbConnect();
 
-  console.log("🛠️ Incoming Request:", {
+  console.log("📢 Incoming Request:", {
     method: req.method,
     query: req.query,
     body: req.body,
+    headers: req.headers,
   });
 
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,15 +36,15 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Handle preflight request
+    return res.status(200).end();
   }
 
   const { id } = req.query;
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    console.warn("⚠️ Invalid or missing Employee ID:", id);
     return res.status(400).json({ error: "Invalid or missing Employee ID" });
   }
 
-  // ✅ Ensure the user is authenticated
   const session = await unstable_getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     console.warn("⚠️ Unauthorized access attempt.");
@@ -43,15 +53,15 @@ export default async function handler(req, res) {
 
   console.log(`🔍 Authenticated request from: ${session.user.email}`);
 
-  // ✅ Handle GET request (Fetch Employee Data)
   if (req.method === "GET") {
     try {
-      const employee = await User.findById(id).select("-password"); // Exclude password
+      console.log("🔍 Fetching employee with ID:", id);
+      const employee = await User.findById(id).select("-password");
       if (!employee) {
         console.warn(`⚠️ Employee with ID ${id} not found.`);
         return res.status(404).json({ error: "Employee not found" });
       }
-      console.log("✅ Employee data fetched successfully.");
+      console.log("✅ Employee data fetched successfully:", employee);
       return res.status(200).json(employee.toObject());
     } catch (error) {
       console.error("🚨 Error fetching employee:", error);
@@ -59,86 +69,32 @@ export default async function handler(req, res) {
     }
   }
 
-  // ✅ Handle PUT request (Update Employee Data)
   if (req.method === "PUT") {
     try {
-      const { age, education, state, religion, image, department, role } = req.body;
+      const bodySize = JSON.stringify(req.body).length;
+      console.log(`📦 Request payload size: ${bodySize} bytes`);
 
-      if (!age || !education || !state || !department || !role) {
-        return res.status(400).json({ error: "Missing required fields" });
+      if (bodySize > 10 * 1024 * 1024) {
+        return res.status(413).json({ error: "Request body too large" });
       }
 
-      let imageUrl = image;
-      if (image && image.startsWith("data:image")) {
-        console.log("📸 Uploading image to Cloudinary...");
-        try {
-          const uploadedImage = await cloudinary.uploader.upload(image, { folder: "employee_images" });
-          imageUrl = uploadedImage.secure_url;
-          console.log("✅ Image uploaded successfully.");
-        } catch (uploadError) {
-          console.error("🚨 Cloudinary Upload Error:", uploadError);
-          return res.status(500).json({ error: "Failed to upload image" });
-        }
-      }
-
-      const updatedEmployee = await User.findByIdAndUpdate(
-        id,
-        { age, education, state, religion, image: imageUrl, department, role },
-        { new: true, runValidators: true }
-      );
+      const updatedEmployee = await User.findByIdAndUpdate(id, req.body, {
+        new: true,
+      }).select("-password");
 
       if (!updatedEmployee) {
+        console.warn(`⚠️ Employee with ID ${id} not found.`);
         return res.status(404).json({ error: "Employee not found" });
       }
 
-      console.log("✅ Employee updated successfully.");
-      return res.status(200).json(updatedEmployee.toObject());
+      console.log("✅ Employee updated successfully:", updatedEmployee);
+      return res.status(200).json(updatedEmployee);
     } catch (error) {
       console.error("🚨 Error updating employee:", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
-  // ✅ Handle DELETE request (Remove Employee)
-  if (req.method === "DELETE") {
-    try {
-      // Ensure only admins can delete employees
-      const adminUser = await User.findById(session.user.id);
-      if (!adminUser || adminUser.role !== "admin") {
-        console.warn("🚫 Access Denied: User is not an admin.");
-        return res.status(403).json({ error: "Access denied. Admins only." });
-      }
-
-      // Check if the user exists
-      const targetUser = await User.findById(id);
-      if (!targetUser) {
-        return res.status(404).json({ error: "Employee not found." });
-      }
-
-      // Delete the employee's image from Cloudinary if exists
-      if (targetUser.image) {
-        console.log("🗑️ Deleting employee image from Cloudinary...");
-        try {
-          const publicId = targetUser.image.split("/").pop().split(".")[0]; // Extract public ID
-          await cloudinary.uploader.destroy(`employee_images/${publicId}`);
-          console.log("✅ Employee image deleted.");
-        } catch (cloudError) {
-          console.error("⚠️ Cloudinary image deletion failed:", cloudError);
-        }
-      }
-
-      // Delete user from DB
-      await User.findByIdAndDelete(id);
-      console.log("✅ Employee deleted successfully.");
-      return res.status(200).json({ message: "Employee deleted successfully." });
-
-    } catch (error) {
-      console.error("🚨 Error deleting employee:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-
-  // ✅ Handle Unsupported Methods
   console.warn(`⚠️ Method ${req.method} not allowed.`);
   return res.status(405).json({ error: "Method Not Allowed" });
 }

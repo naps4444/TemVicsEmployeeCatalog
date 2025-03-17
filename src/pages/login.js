@@ -32,7 +32,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-black">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#F8F3D9] text-black">
 
       <div className="py-6 flex gap-2">
               <Image src="/logo.png" height={100} width={100} alt="logo" />
@@ -60,7 +60,7 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required autoComplete="new-password"
         />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" type="submit" disabled={loading}>
+        <button className="bg-black text-white border-[2px] border-[#B9B28A] px-4 py-2 rounded hover:bg-[#B9B28A]" type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
 

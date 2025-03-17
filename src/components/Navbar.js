@@ -47,7 +47,8 @@ export default function Navbar() {
   }, [menuOpen]);
 
   return (
-    <nav className="bg-[#c95c5c] text-white shadow-md p-4 h-[80px] md:py-[20px] relative">
+    <nav className="fixed top-0 left-0 w-full bg-[#F8F3D9] text-black shadow-md p-4 h-[80px] md:py-[20px] z-50">
+
       <div className="flex justify-between items-center relative">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.png" height={100} width={100} alt="logo" className="w-[200px]"/>
@@ -69,12 +70,12 @@ export default function Navbar() {
           ) : employee ? (
             <div className="flex items-center gap-3">
               <Image src={employee?.image || "/default-avatar.png"} alt="Profile" width={40} height={40} className="rounded-full object-cover" />
-              <button onClick={() => signOut()} className="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
+              <button onClick={() => signOut()} className="bg-black px-3 py-1 text-white rounded hover:bg-[#B9B28A]">
                 Logout
               </button>
             </div>
           ) : (
-            <Link href="/login" className="bg-black px-4 py-2 rounded hover:bg-blue-600">
+            <Link href="/login" className="bg-black text-white px-4 py-2 rounded hover:bg-[#B9B28A]">
               Login
             </Link>
           )}
@@ -84,7 +85,7 @@ export default function Navbar() {
       {/* Mobile Dropdown Menu */}
       <div
         ref={menuRef}
-        className={`md:hidden flex flex-col gap-3 bg-[#c95c5c] shadow-lg p-4 rounded-lg absolute top-full left-0 w-full z-50 transition-all duration-300 ease-in-out ${
+        className={`md:hidden flex flex-col gap-3 bg-[#B9B28A] shadow-lg p-4 rounded-lg absolute top-full left-0 w-full z-50 transition-all duration-300 ease-in-out ${
           menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
@@ -95,11 +96,11 @@ export default function Navbar() {
         {status === "loading" ? (
           <p>Loading...</p>
         ) : employee ? (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex justify-center items-center gap-3">
             <Image src={employee?.image || "/default-avatar.png"} alt="Profile" width={40} height={40} className="rounded-full object-cover" />
             <button
   onClick={() => signOut({ callbackUrl: "/login" })} // ✅ Redirects to login page after logout
-  className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
 >
   Logout
 </button>

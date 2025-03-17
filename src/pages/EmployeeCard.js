@@ -33,38 +33,54 @@ const EmployeeCard = ({ employee }) => {
 
   const handleUpdate = async (updatedInfo) => {
     if (!canEdit) {
-      if (typeof window !== "undefined") {
-        alert("❌ You are not authorized to edit this profile.");
-      }
+      alert("❌ You are not authorized to edit this profile.");
       return;
     }
-
+  
+    let updatedData = { ...updatedInfo };
+  
+    // ✅ Upload image separately to Cloudinary if an image is included
+    if (updatedInfo.image && updatedInfo.image instanceof File) {
+      const formData = new FormData();
+      formData.append("file", updatedInfo.image);
+      formData.append("upload_preset", "your_cloudinary_preset");
+  
+      try {
+        const uploadRes = await fetch("https://api.cloudinary.com/v1_1/your_cloudinary_name/image/upload", {
+          method: "POST",
+          body: formData,
+        });
+  
+        const uploadData = await uploadRes.json();
+        updatedData.image = uploadData.secure_url; // Store Cloudinary URL
+      } catch (error) {
+        console.error("🚨 Error uploading image:", error);
+        alert("Image upload failed.");
+        return;
+      }
+    }
+  
     try {
       const response = await fetch(`/api/employees/${updatedEmployee._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedInfo),
+        body: JSON.stringify(updatedData),
       });
-
+  
       const responseData = await response.json();
       if (response.ok) {
         updateEmployee(responseData);
-        if (typeof window !== "undefined") {
-          alert("Profile updated successfully.");
-        }
+        alert("Profile updated successfully.");
         setIsEditing(false);
       } else {
-        if (typeof window !== "undefined") {
-          alert(`Failed to update profile: ${responseData.error}`);
-        }
+        alert(`Failed to update profile: ${responseData.error}`);
       }
     } catch (error) {
       console.error("🚨 Error updating user:", error);
-      if (typeof window !== "undefined") {
-        alert("An error occurred. Please try again.");
-      }
+      alert("An error occurred. Please try again.");
     }
   };
+  
 
   const handleDelete = async () => {
     if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this employee?")) {
@@ -98,7 +114,7 @@ const EmployeeCard = ({ employee }) => {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-md mx-auto">
+    <div className="bg-[#B9B28A] shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-md mx-auto">
       {updatedEmployee.image ? (
         <Image
           src={updatedEmployee.image}

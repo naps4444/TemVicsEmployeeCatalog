@@ -52,14 +52,15 @@ export default function UploadForm() {
 
   return (
     <>
-      <form onSubmit={handleUpload} className="flex flex-col gap-4 w-10/12 md:w-6/12 mx-auto">
+    <div className="bg-[#504B38]">
+    <form onSubmit={handleUpload} className="flex flex-col gap-4 w-10/12 md:w-6/12 mx-auto py-[100px] bg-[#504B38]">
         <input
           type="text"
           placeholder="Product Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black"
+          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black bg-[#B9B28A] placeholder:text-white"
         />
 
         <input
@@ -68,7 +69,7 @@ export default function UploadForm() {
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           required
-          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black"
+          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black bg-[#B9B28A] placeholder:text-white"
         />
 
         <input
@@ -77,12 +78,12 @@ export default function UploadForm() {
           accept="image/*"
           onChange={handleFileChange}
           required
-          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black"
+          className="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-black bg-[#B9B28A] placeholder:text-white"
         />
 
         <button
           type="submit"
-          className="border border-black hover:bg-black hover:text-white w-2/6 md:w-2/6 py-2 mx-auto rounded-md transition-all duration-300"
+          className="border border-black hover:bg-black text-white w-3/6 md:w-2/6 py-2 mx-auto rounded-md transition-all duration-300"
           disabled={loading}
         >
           {loading ? "Uploading..." : "Upload Product"}
@@ -90,6 +91,9 @@ export default function UploadForm() {
 
         {message && <p className="text-center text-sm text-gray-600">{message}</p>}
       </form>
+
+    </div>
+      
 
     </>
   );

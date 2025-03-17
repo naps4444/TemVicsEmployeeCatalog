@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from "react";
 import EmployeeCard from "./EmployeeCard";
+import Loader from "@/components/Loader";
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
@@ -61,9 +62,9 @@ const EmployeeList = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Employee List</h2>
+      <h2 className="text-3xl font-bold text-center mb-6 mt-4  text-white">Employee List</h2>
 
-      {loading && <p className="text-center text-gray-500 text-lg">Loading...</p>}
+      {loading && <Loader/>}
       {error && <p className="text-center text-red-500 text-lg">Error: {error}</p>}
       {!loading && !error && employees.length === 0 && (
         <p className="text-center text-gray-500 text-lg">No employees found.</p>

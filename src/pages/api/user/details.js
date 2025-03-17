@@ -33,7 +33,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ user });
   } catch (error) {
-    console.error("Error fetching user details:", error);
+    console.error("🚨 Error fetching user details:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
+
+// ✅ Increase API body size limit (prevents 'Body exceeds limit' error)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
+};

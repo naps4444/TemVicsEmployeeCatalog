@@ -17,12 +17,25 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check content type
+    if (!req.headers["content-type"]?.includes("application/json")) {
+      return res.status(400).json({ error: "Invalid Content-Type. Expected application/json" });
+    }
+
+    // Parse request body safely
+    let requestBody;
+    try {
+      requestBody = JSON.parse(req.body);
+    } catch (parseError) {
+      return res.status(400).json({ error: "Invalid JSON format" });
+    }
+
     const session = await unstable_getServerSession(req, res, authOptions);
     if (!session || !session.user) {
       return res.status(401).json({ error: "Unauthorized: No valid session" });
     }
 
-    const { age, education, state, religion, image } = req.body;
+    const { age, education, state, religion, image } = requestBody;
 
     if (!age || !education || !state || !religion) {
       return res.status(400).json({ error: "All fields are required" });

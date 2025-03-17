@@ -85,7 +85,7 @@ export default function ProductItem() {
   if (loading) return <p>Loading products...</p>;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="2xl:container mx-auto p-4 bg-[#504B38]">
       <h1 className="text-2xl font-bold mb-4">Product List</h1>
 
       {editProduct && (
@@ -133,14 +133,14 @@ export default function ProductItem() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ">
         {products.map((product) => (
-          <div key={product._id} className="border p-4 rounded shadow">
+          <div key={product._id} className="border p-4 rounded shadow bg-[#B9B28A] mt-4">
             <h2 className="text-lg font-semibold mb-2">{product.name}</h2>
             <p className="text-gray-600">₦{Number(product.price).toLocaleString()}</p>
 
             {/* Display all product images */}
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2 mt-2 ">
               {product.images.map((image, index) => (
                 <img
                   key={index}

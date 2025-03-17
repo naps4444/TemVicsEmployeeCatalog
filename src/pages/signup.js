@@ -39,7 +39,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center bg-[#F8F3D9] min-h-screen p-4">
 
       <div className="py-6 flex gap-2">
         <Image src="/logo.png" height={100} width={100} alt="logo" />
@@ -112,7 +112,7 @@ export default function Signup() {
           <option value="Engineering">Engineering</option>
         </select>
 
-        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" type="submit" disabled={loading}>
+        <button className="bg-black text-white px-4 py-2 rounded border-[2px] border-[#B9B28A] hover:bg-[#B9B28A]" type="submit" disabled={loading}>
           {loading ? "Registering..." : "Sign Up"}
         </button>
       </form>

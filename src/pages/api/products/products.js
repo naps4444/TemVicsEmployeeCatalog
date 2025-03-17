@@ -4,18 +4,16 @@ import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '@/lib/cloudinary';
 import sharp from 'sharp'; // Image compression
+import fs from 'fs/promises'; // Handle temporary files
 import { promisify } from 'util';
 
-// Multer Storage with Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: 'products',
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-      public_id: `${Date.now()}-${file.originalname}`,
-    };
-  },
+  params: async (req, file) => ({
+    folder: 'products',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    public_id: `${Date.now()}-${file.originalname}`,
+  }),
 });
 
 const upload = multer({ storage });
@@ -27,32 +25,38 @@ export default async function handler(req, res) {
   await dbConnect();
 
   if (req.method === 'GET') {
-    const products = await Product.find();
-    return res.status(200).json(products);
+    try {
+      const products = await Product.find();
+      return res.status(200).json(products);
+    } catch (error) {
+      return res.status(500).json({ error: `Fetch error: ${error.message}` });
+    }
   }
 
   if (req.method === 'POST') {
     try {
       await uploadMiddleware(req, res);
-
       const { name, price } = req.body;
       const imageUrls = [];
 
       for (const file of req.files) {
-        let imageBuffer = file.buffer;
+        const tempPath = `./tmp/${file.originalname}`;
+        await fs.writeFile(tempPath, file.buffer);
 
-        // Compress images larger than 10MB
-        if (file.size > 10 * 1024 * 1024) {
-          imageBuffer = await sharp(file.buffer).resize(1000).jpeg({ quality: 70 }).toBuffer();
-        }
+        // Compress large images
+        await sharp(tempPath).resize(1000).jpeg({ quality: 70 }).toFile(`${tempPath}-compressed.jpg`);
 
-        // Upload to Cloudinary
-        const uploadedImage = await cloudinary.uploader.upload(imageBuffer, {
+        // Upload compressed image to Cloudinary
+        const uploadedImage = await cloudinary.uploader.upload(`${tempPath}-compressed.jpg`, {
           folder: 'products',
           public_id: `${name}-${price}-${Date.now()}`,
         });
 
         imageUrls.push(uploadedImage.secure_url);
+
+        // Cleanup temp files
+        await fs.unlink(tempPath);
+        await fs.unlink(`${tempPath}-compressed.jpg`);
       }
 
       const product = await Product.create({ name, price, images: imageUrls });
@@ -66,7 +70,10 @@ export default async function handler(req, res) {
   if (req.method === 'DELETE') {
     try {
       const { id } = req.query;
-      await Product.findByIdAndDelete(id);
+      const deletedProduct = await Product.findByIdAndDelete(id);
+
+      if (!deletedProduct) return res.status(404).json({ error: 'Product not found' });
+
       return res.status(200).json({ message: 'Product deleted' });
     } catch (error) {
       return res.status(500).json({ error: `Deletion error: ${error.message}` });
@@ -75,14 +82,41 @@ export default async function handler(req, res) {
 
   if (req.method === 'PUT') {
     try {
+      await uploadMiddleware(req, res);
       const { id, name, price, images } = req.body;
+
+      if (!id) return res.status(400).json({ error: 'Product ID is required' });
+
+      const existingProduct = await Product.findById(id);
+      if (!existingProduct) return res.status(404).json({ error: 'Product not found' });
+
+      let imageUrls = Array.isArray(images) ? images : existingProduct.images;
+
+      // Handle new image uploads
+      if (req.files.length > 0) {
+        for (const file of req.files) {
+          const tempPath = `./tmp/${file.originalname}`;
+          await fs.writeFile(tempPath, file.buffer);
+
+          await sharp(tempPath).resize(1000).jpeg({ quality: 70 }).toFile(`${tempPath}-compressed.jpg`);
+
+          const uploadedImage = await cloudinary.uploader.upload(`${tempPath}-compressed.jpg`, {
+            folder: 'products',
+            public_id: `${name}-${price}-${Date.now()}`,
+          });
+
+          imageUrls.push(uploadedImage.secure_url);
+
+          await fs.unlink(tempPath);
+          await fs.unlink(`${tempPath}-compressed.jpg`);
+        }
+      }
+
       const updatedProduct = await Product.findByIdAndUpdate(
         id,
-        { name, price, images },
+        { name, price, images: imageUrls },
         { new: true }
       );
-
-      if (!updatedProduct) return res.status(404).json({ error: 'Product not found' });
 
       return res.status(200).json({ message: 'Product updated', product: updatedProduct });
     } catch (error) {
