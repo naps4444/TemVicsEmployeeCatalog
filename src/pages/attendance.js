@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AttendanceRecords from "./recordPage";
 
 export default function AttendancePage() {
   const [employees, setEmployees] = useState([]);
@@ -135,6 +136,8 @@ export default function AttendancePage() {
   if (loading) return <p>Loading...</p>;
 
   return (
+    <>
+    
     <div className="w-full mx-auto mt-20">
       <h1 className="text-2xl font-bold mb-4">Employee Attendance</h1>
       <table className="w-full border-collapse border border-gray-300">
@@ -218,5 +221,10 @@ export default function AttendancePage() {
         </tbody>
       </table>
     </div>
+
+    <div>
+      <AttendanceRecords/>
+    </div>
+    </>
   );
 }
