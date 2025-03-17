@@ -1,4 +1,4 @@
-import { unstable_getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid or missing Employee ID" });
   }
 
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     console.warn("⚠️ Unauthorized access attempt.");
     return res.status(403).json({ error: "Not authenticated" });
@@ -53,6 +53,7 @@ export default async function handler(req, res) {
 
   console.log(`🔍 Authenticated request from: ${session.user.email}`);
 
+  // ✅ Handle GET request (Fetch employee details)
   if (req.method === "GET") {
     try {
       console.log("🔍 Fetching employee with ID:", id);
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // ✅ Handle PUT request (Update employee details)
   if (req.method === "PUT") {
     try {
       const bodySize = JSON.stringify(req.body).length;
@@ -91,6 +93,42 @@ export default async function handler(req, res) {
       return res.status(200).json(updatedEmployee);
     } catch (error) {
       console.error("🚨 Error updating employee:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  // ✅ Handle DELETE request (Remove employee)
+  if (req.method === "DELETE") {
+    try {
+      console.log("🗑️ Attempting to delete employee:", id);
+
+      // Check if the user exists before deleting
+      const employee = await User.findById(id);
+      if (!employee) {
+        console.warn(`⚠️ Employee with ID ${id} not found.`);
+        return res.status(404).json({ error: "Employee not found" });
+      }
+
+      // **Prevent self-deletion**
+      if (session.user.id === id) {
+        console.warn("⚠️ Admin tried to delete themselves!");
+        return res.status(400).json({ error: "You cannot delete yourself." });
+      }
+
+      // **Remove profile picture from Cloudinary (if applicable)**
+      if (employee.profileImage) {
+        const publicId = employee.profileImage.split("/").pop().split(".")[0]; // Extract Cloudinary Public ID
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`🖼️ Deleted Cloudinary image: ${publicId}`);
+      }
+
+      // **Delete employee from the database**
+      await User.findByIdAndDelete(id);
+      console.log("✅ Employee deleted successfully.");
+
+      return res.status(200).json({ message: "Employee deleted successfully." });
+    } catch (error) {
+      console.error("🚨 Error deleting employee:", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }

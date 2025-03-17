@@ -86,32 +86,28 @@ const EmployeeCard = ({ employee }) => {
     if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this employee?")) {
       return;
     }
-
+  
     try {
+      // ✅ Make DELETE request with correct employee ID in the URL
       const response = await fetch(`/api/employees/${updatedEmployee._id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
-
+  
       const data = await response.json();
       if (response.ok) {
         deleteEmployee(updatedEmployee._id);
-        if (typeof window !== "undefined") {
-          alert("Employee deleted successfully.");
-          window.location.reload();
-        }
+        alert("Employee deleted successfully.");
+        window.location.reload();
       } else {
-        if (typeof window !== "undefined") {
-          alert(data.error || "Failed to delete employee.");
-        }
+        alert(data.error || "Failed to delete employee.");
       }
     } catch (error) {
       console.error("🚨 Error deleting user:", error);
-      if (typeof window !== "undefined") {
-        alert("An error occurred. Please try again.");
-      }
+      alert("An error occurred. Please try again.");
     }
   };
+  
 
   return (
     <div className="bg-[#B9B28A] shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-md mx-auto">
