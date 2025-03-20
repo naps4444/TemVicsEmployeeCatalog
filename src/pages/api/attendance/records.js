@@ -12,18 +12,48 @@ export default async function handler(req, res) {
     await dbConnect();
     console.log("✅ MongoDB Connected!");
 
-    // Fetch all employees
-    const employees = await User.find({}, "_id name").lean();
+    const { filterType } = req.query; // Accept filter type from frontend
+    let startDate, endDate;
 
-    // Fetch attendance records for today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const attendanceRecords = await Attendance.find({ date: { $gte: today } }).lean();
+    switch (filterType) {
+      case "day":
+        startDate = new Date(today);
+        endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 1); // Next day at midnight
+        break;
+      case "week":
+        startDate = new Date(today);
+        startDate.setDate(startDate.getDate() - 6); // 7 days range
+        endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      case "month":
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1); // Start of month
+        endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      case "year":
+        startDate = new Date(today.getFullYear(), 0, 1); // Start of year
+        endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      default:
+        return res.status(400).json({ error: "Invalid filter type" });
+    }
 
-    console.log("📋 Fetched Attendance Records:", attendanceRecords);
+    console.log(`🔍 Fetching records from ${startDate} to ${endDate}`);
 
-    // Map attendance records to employees
+    const employees = await User.find({}, "_id name").lean();
+
+    const attendanceRecords = await Attendance.find({
+      date: { $gte: startDate, $lt: endDate },
+    }).lean();
+
+    console.log("📋 Attendance Records:", attendanceRecords);
+
     const attendanceStatus = employees.map((employee) => {
       const record = attendanceRecords.find(
         (rec) => rec.employeeId.toString() === employee._id.toString()
@@ -36,7 +66,6 @@ export default async function handler(req, res) {
       };
     });
 
-    console.log("✅ Formatted Attendance Data:", attendanceStatus);
     return res.status(200).json(attendanceStatus);
   } catch (error) {
     console.error("❌ Error Fetching Attendance Records:", error);

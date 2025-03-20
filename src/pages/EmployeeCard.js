@@ -135,7 +135,7 @@ const EmployeeCard = ({ employee }) => {
           onCancel={() => setIsEditing(false)}
         />
       ) : (
-        <div className="mt-6 text-gray-700 space-y-2 text-sm">
+        <div className="flex flex-col gap-2 mt-6 text-gray-700 w-8/12 text-sm">
           {["age", "education", "state", "religion", "department"].map((key) => (
             <p key={key}>
               <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong>{" "}
@@ -143,7 +143,7 @@ const EmployeeCard = ({ employee }) => {
             </p>
           ))}
           <span
-            className={`inline-block px-3 py-1 mt-2 rounded-full text-sm font-medium ${
+            className={`inline-block px-3 py-1 mt-2 rounded-full text-sm font-medium w-[90px] text-center ${
               updatedEmployee.role === "admin"
                 ? "bg-red-100 text-red-600"
                 : "bg-blue-100 text-blue-600"
@@ -153,25 +153,26 @@ const EmployeeCard = ({ employee }) => {
           </span>
 
           {/* ✅ Conditional buttons based on permissions */}
-          <div className="mt-5 flex gap-4">
-            {canEdit && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition"
-              >
-                Edit Profile
-              </button>
-            )}
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+  {canEdit && (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="bg-black w-full text-white p-2 rounded-lg mt-2 transition-all duration-300 hover:bg-gray-800 hover:scale-105"
+    >
+      Edit Profile
+    </button>
+  )}
 
-            {loggedInUser?.role === "admin" && (
-              <button
-                onClick={handleDelete}
-                className="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition"
-              >
-                Delete User
-              </button>
-            )}
-          </div>
+  {loggedInUser?.role === "admin" && (
+    <button
+      onClick={handleDelete}
+      className="bg-yellow-900 w-full text-white p-2 rounded-lg mt-2 transition-all duration-300 hover:bg-yellow-700 hover:scale-105"
+    >
+      Delete User
+    </button>
+  )}
+</div>
+
         </div>
       )}
     </div>
